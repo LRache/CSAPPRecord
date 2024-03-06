@@ -44,7 +44,25 @@ void test_tsub_ok() {
     std::cout << buggy_tsub_ok(x, y) << std::endl;
 }
 
+// 2.36
+bool tmult_ok(int a, int b) {
+    int64_t t = a * (int64_t)b;
+    return t < INT32_MAX || t > INT32_MIN;
+}
+
+// 2.42
+int div16(int x) {
+    int t = x >> 32;
+    return (x+ (t & 0b1111)) >> 4;
+}
+
+void test_div16() {
+    std::cout << std::boolalpha;
+    std::cout << (div16(100) == (100 / 16)) << std::endl;
+    std::cout << (div16(-100) == (-100) / 16) << std::endl;
+}
+
 int main() {
-    test_tsub_ok();
+    test_div16();
     return 0;
 }

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8"/>
+    <title>预警</title>
+    <meta name="format-detection" content="telephone=yes">
+    <link rel="icon" href="data:;base64,=">
+    <link rel="stylesheet" type="text/css" href="/telecom/css-m/common.css?r=2022051716"/>
+    <link rel="stylesheet" type="text/css" href="/telecom/css-m/landing.css?r=2022051716"/>
+    <link rel="stylesheet" type="text/css" href="/telecom/css/common.css?r=2022051716"/>
+    <link rel="stylesheet" type="text/css" href="/telecom/css/landing.css?r=2022051716"/>
+    <script type="text/javascript">
+        if ((navigator.userAgent.match(/(phone|pad|pod|iPhone|iPod|ios|iPad|Android|Mobile|BlackBerry|IEMobile|MQQBrowser|JUC|Fennec|wOSBrowser|BrowserNG|WebOS|Symbian|Windows Phone)/i))) {
+            // 手机端
+            var scale = parseInt(window.screen.width) / 375;
+            document.write('<meta name="viewport" content="width=375, minimum-scale=' + scale + ', maximum-scale=' + scale + ', target-densitydpi=device-dpi, use-scalable=no">');
+
+            var link1 = document.createElement('link');
+            link1.rel = "stylesheet";
+            link1.type = "text/css";
+            link1.href = "/telecom/css-m/page.css?r=2022051716";
+            document.getElementsByTagName("head")[0].appendChild(link1);
+        } else {
+            var link1 = document.createElement('link');
+            link1.rel = "stylesheet";
+            link1.type = "text/css";
+            link1.href = "/telecom/css/page.css?r=2022051716";
+            document.getElementsByTagName("head")[0].appendChild(link1);
+        }
+    </script>
+</head>
+
+<body>
+<div class="pc-page page flex-col">
+    <div class="landing-header flex-row">
+        <div class="landing-header-image"></div>
+        <div class="landing-header-text"></div>
+    </div>
+    <div class="landing-content flex-col">
+        <div class="landing-content-top flex-row">
+            <div class="landing-content-top-police"></div>
+            <div class="landing-content-top-suggest">
+                <div class="landing-content-top-line-1 flex-row">
+                    <div class="landing-content-top-line-1-left"></div>
+                    <div class="landing-content-top-line-1-right">您当前访问的页面存在安全风险！</div>
+                </div>
+                <div class="landing-content-top-line-2 flex-row">
+                    <div class="landing-content-top-line-2-left"></div>
+                    <div class="landing-content-top-line-2-right"><span>公安机关</span>温馨提醒：</div>
+                </div>
+                <div class="landing-content-top-line-3">
+                    <div class="landing-content-top-line-3-right">您访问的<span class="url"></span>该网站被大量用户举报，网站含有未经证实的信息，可能造成您的损失，建议谨慎访问！
+                    </div>
+                </div>
+                <div class="landing-content-top-line-4 flex-row">
+                    <div class="landing-content-top-line-4-left"></div>
+                    <div class="landing-content-top-line-4-right">拦截申诉：<span>点此链接</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="landing-content-middle flex-row">
+            <div class="landing-content-middle-left common">
+                <div class="landing-content-middle-left-line-1 flex-row">
+                    <div class="landing-content-middle-left-line-1-left"></div>
+                    <div class="landing-content-middle-left-line-1-right">96110</div>
+                </div>
+                <div class="landing-content-middle-left-line-2 flex-row">
+                    <div class="landing-content-middle-left-line-2-right">如有疑问，请拨打全国统一反电信 网络诈骗专用号码</div>
+                </div>
+            </div>
+            <div class="landing-content-middle-left special">
+                <div class="landing-content-middle-left-line-1 flex-row">
+                    <div class="landing-content-middle-left-line-1-left"></div>
+                    <div class="landing-content-middle-left-line-1-right"></div>
+                </div>
+                <div class="landing-content-middle-left-line-2 flex-row">
+                    <div class="landing-content-middle-left-line-2-right">如有疑问，请拨打电话联系我们</div>
+                </div>
+            </div>
+            <a class="landing-content-middle-right" href="https://mp.weixin.qq.com/s/A-VdUheW39v7saCnoqiIAw">
+                <div class="landing-content-middle-right-image"></div>
+            </a>
+        </div>
+        <div class="landing-content-bottom flex-row" style="display: none">
+            <div class="landing-content-bottom-image"></div>
+        </div>
+    </div>
+    <div class="landing-concat flex-row">
+        <div class="landing-concat-image"></div>
+        <div class="landing-concat-text">技术支持热线：13357131079</div>
+    </div>
+    <div class="landing-bottom">浙ICP备14014943号-3</div>
+</div>
+<div class="yd-page page flex-col">
+    <div class="landing-header flex-col">
+        <div class="landing-header-line-1 flex-row">
+            <div class="landing-header-image"></div>
+            <div class="landing-header-text"></div>
+        </div>
+        <div class="landing-header-line-2 flex-row">
+            <div class="landing-header-left"></div>
+            <div class="landing-header-middle flex-col">
+                <div class="landing-header-middle-line-1 landing-tooltip"><span>公安机关</span>温馨提醒：</div>
+                <div class="landing-header-middle-line-2">您当前访问的页面存在安全风险！</div>
+            </div>
+            <div class="landing-header-right"></div>
+        </div>
+    </div>
+
+    <div class="landing-suggest flex-col">
+        <div class="landing-suggest-line-1">
+            <div class="landing-suggest-line-1-text">您访问的<span class="url"></span>该网站被大量用户举报，网站含有未经证实的信息，可能造成您的损失，建议谨慎访问！
+            </div>
+        </div>
+        <div class="landing-suggest-line-2 flex-row">
+            <div class="landing-suggest-line-2-left">
+                <div class="landing-suggest-line-2-left-line-1 flex-row">
+                    <div class="landing-suggest-line-2-left-line-1-left"></div>
+                    <div class="landing-suggest-line-2-left-line-1-right">联系我们</div>
+                </div>
+                <div class="landing-suggest-line-2-left-line-2">96110</div>
+            </div>
+            <div class="landing-suggest-line-2-right">
+                <div class="landing-suggest-line-2-right-line-1 flex-row">
+                    <div class="landing-suggest-line-2-right-line-1-left"></div>
+                    <div class="landing-suggest-line-2-right-line-1-right">拦截申诉</div>
+                </div>
+                <div class="landing-suggest-line-2-right-line-2">点此链接</div>
+            </div>
+        </div>
+    </div>
+
+    <a class="landing-tixing flex-col" href="https://mp.weixin.qq.com/s/A-VdUheW39v7saCnoqiIAw">
+        <div class="landing-tixing-image"></div>
+        <div class="landing-tixing-title flex-row">
+            <div class="landing-tixing-title-image"></div>
+            <div class="landing-tixing-title-text landing-tooltip"><span>公安机关</span>提醒您：</div>
+        </div>
+    </a>
+
+    <div class="landing-fanpianma flex-row" style="display: none">
+        <div class="landing-fanpianma-image"></div>
+    </div>
+    <div class="landing-concat flex-row">
+        <div class="landing-concat-image"></div>
+        <div class="landing-concat-text">技术支持热线：13357131079</div>
+    </div>
+    <div class="landing-bottom">浙ICP备14014943号-3</div>
+</div>
+
+<script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+<script type="text/javascript">
+    if ((navigator.userAgent.match(/(phone|pad|pod|iPhone|iPod|ios|iPad|Android|Mobile|BlackBerry|IEMobile|MQQBrowser|JUC|Fennec|wOSBrowser|BrowserNG|WebOS|Symbian|Windows Phone)/i))) {
+        // 手机端
+        var script0 = document.createElement('script');
+        script0.src = "/telecom/script-m/landing.js?r=2022051716";
+        script0.type = 'text/javascript';
+        document.getElementsByTagName("body")[0].appendChild(script0);
+
+        var _hmt = _hmt || [];
+        (function () {
+            var hm = document.createElement("script");
+            hm.src = "https://hm.baidu.com/hm.js?47e2f78d9401e3549bdcdeeff34570f5";
+            var s = document.getElementsByTagName("script")[0];
+            s.parentNode.insertBefore(hm, s);
+        })();
+
+        var script3 = document.createElement('script');
+        script3.src = "https://hm.baidu.com/hm.js?6d9e714407173c1166fdc33400e3afa5";
+        script3.type = 'text/javascript';
+        document.getElementsByTagName("body")[0].appendChild(script3);
+
+        var script4 = document.createElement('script');
+        script4.src = "https://s9.cnzz.com/z_stat.php?id=1281029237&web_id=1281029237";
+        script4.type = 'text/javascript';
+        document.getElementsByTagName("body")[0].appendChild(script4);
+    } else {
+        // PC端
+        var script0 = document.createElement('script');
+        script0.src = "/telecom/script/landing.js?r=2022051716";
+        script0.type = 'text/javascript';
+        document.getElementsByTagName("body")[0].appendChild(script0);
+
+        var _hmt = _hmt || [];
+        (function () {
+            var hm = document.createElement("script");
+            hm.src = "https://hm.baidu.com/hm.js?455717c6e47e7d30badf70de9a386bf7";
+            var s = document.getElementsByTagName("script")[0];
+            s.parentNode.insertBefore(hm, s);
+        })();
+
+        var script4 = document.createElement('script');
+        script4.src = "https://hm.baidu.com/hm.js?6d9e714407173c1166fdc33400e3afa5";
+        script4.type = 'text/javascript';
+        document.getElementsByTagName("body")[0].appendChild(script4);
+
+        var script5 = document.createElement('script');
+        script5.src = "https://s9.cnzz.com/z_stat.php?id=1281029237&web_id=1281029237";
+        script5.type = 'text/javascript';
+        document.getElementsByTagName("body")[0].appendChild(script5);
+    }
+</script>
+</body>
+</html>
