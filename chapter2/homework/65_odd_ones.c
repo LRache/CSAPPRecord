@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 // Return 1 when x contains an odd number of ls; 0 otherwise. Assume w=32
 int odd_ones(unsigned int x) {
     x ^= x >> 16;
@@ -9,6 +11,8 @@ int odd_ones(unsigned int x) {
 }
 
 int main() {
-    
+    unsigned int x;
+    scanf("%u", &x);
+    printf("%d", odd_ones(x));
     return 0;
 }
