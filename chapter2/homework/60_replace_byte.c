@@ -1,7 +1,9 @@
 #include "show_bytes/show_bytes.h"
 #include <stdio.h>
-u_int32_t replace_byte(u_int32_t x, int i, unsigned char b) {
-    u_int32_t t = 0b11111111;
+#include <stdint.h>
+
+uint32_t replace_byte(uint32_t x, int i, unsigned char b) {
+    uint32_t t = 0b11111111;
     i *= sizeof(unsigned char);
     t <<= i;
     t = ~t;
@@ -10,6 +12,6 @@ u_int32_t replace_byte(u_int32_t x, int i, unsigned char b) {
 }
 
 int main() {
-    u_int32_t r = replace_byte(0x12345678, 0, 0xAB);
+    uint32_t r = replace_byte(0x12345678, 0, 0xAB);
     show_bytes((bytePtr)&r, 4);
 }
