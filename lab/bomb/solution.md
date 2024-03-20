@@ -27,3 +27,8 @@ Border relations with Canada have never been better.
 ionefg
 INOEFG
 ```
+
+## Bomb6
+```
+4 3 2 1 6 5
+```
