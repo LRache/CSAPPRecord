@@ -1,5 +1,13 @@
 #include <stdio.h>
 
+typedef struct
+{
+    int number;
+    int id;
+    Node *next;
+} Node;
+
+
 int read_six_numbers(int *a)
 {
     return scanf("%d %d %d %d %d %d", a, a + 1, a + 2, a + 3, a + 4, a + 5);
