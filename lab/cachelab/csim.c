@@ -16,18 +16,19 @@ typedef struct
 
 CacheLine **cache;
 int s, E, b = 2;
+uint64_t S;
 FILE *traceFile;
 int verboseFlag = 0;
 int stamp = 0;
 int missCount = 0, hitCount = 0, evictionCount = 0;
 
 void init_cache() {
-    cache = (CacheLine**)malloc(sizeof(CacheLine*) * s);
-    for (int i = 0; i < s; i++)
+    cache = (CacheLine**)malloc(sizeof(CacheLine*) * S);
+    for (int i = 0; i < S; i++)
     {
         cache[i] = (CacheLine*)malloc(sizeof(CacheLine) * E);
     }
-    for (int i = 0; i < s; i++) {
+    for (int i = 0; i < S; i++) {
         for (int j = 0; j < E; j++) {
             cache[i][j].valid = 0;
             cache[i][j].tag = 0;
@@ -37,7 +38,7 @@ void init_cache() {
 }
 
 void free_cache() {
-    for (int i = 0; i < s; i++) {
+    for (int i = 0; i < S; i++) {
         free(cache[i]);
         cache = NULL;
     }
@@ -52,6 +53,7 @@ void phase_argv(int argc, char **argv) {
         {
         case 's':
             sscanf(optarg, "%d", &s);
+            S = 1 << s;
             break;
         case 'E':
             sscanf(optarg, "%d", &E);
@@ -75,7 +77,7 @@ void phase_argv(int argc, char **argv) {
 
 void verbose(const char *output) {
     if (verboseFlag) {
-        printf(output);
+        printf("%s", output);
     }
 }
 
@@ -83,7 +85,7 @@ int cache_hit(uint64_t tag, uint64_t set) {
     stamp++;
     CacheLine *lines = cache[set];
     for (int i = 0; i < E; i++) {
-        if (lines[i].valid && lines[i].tag  == tag) {
+        if (lines[i].valid && lines[i].tag == tag) {
             lines[i].stamp = stamp;
             verbose(" hit");
             hitCount++;
@@ -130,14 +132,14 @@ int use_data(uint64_t tag, uint64_t set) {
 }
 
 void simulate_cache() {
-    uint64_t setMask = 1 << s;
+    uint64_t mask = S - 1;
     stamp = 0;
 
     char op;
     uint64_t addr;
     uint32_t size;
-    while (~fscanf(traceFile, "%c %lx, %x" SCNx32, &op, &addr, &size)) {
-        uint64_t set = (addr >> b) & setMask;
+    while (~fscanf(traceFile, "%c %lx, %x", &op, &addr, &size)) {
+        uint64_t set = (addr >> b) & mask;
         uint64_t tag = addr >> (b+s);
 
         if (op == 'L') {
@@ -158,6 +160,6 @@ int main(int argc, char **argv)
 
     simulate_cache();
 
-    printSummary(missCount, hitCount, evictionCount);
+    printSummary(hitCount, missCount, evictionCount);
     return 0;
 }
