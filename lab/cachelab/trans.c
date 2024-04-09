@@ -46,25 +46,14 @@ void transpose_64x64(int A[64][64], int B[64][64]) {
     {
         for (int j = 0; j < 64; j += 8)
         {
-            for (int k = 0; k < 8; k++)
+            for (int k = 0; k < 4; k++)
             {
-                int tmp0 = A[i + k][j];
-                int tmp1 = A[i + k][j + 1];
-                int tmp2 = A[i + k][j + 2];
-                int tmp3 = A[i + k][j + 3];
-                int tmp4 = A[i + k][j + 4];
-                int tmp5 = A[i + k][j + 5];
-                int tmp6 = A[i + k][j + 6];
-                int tmp7 = A[i + k][j + 7];
-                B[j][i + k] = tmp0;
-                B[j + 1][i + k] = tmp1;
-                B[j + 2][i + k] = tmp2;
-                B[j + 3][i + k] = tmp3;
-                B[j + 4][i + k] = tmp4;
-                B[j + 5][i + k] = tmp5;
-                B[j + 6][i + k] = tmp6;
-                B[j + 7][i + k] = tmp7;
+                B[j+k][i] = A[i][j+k];
             }
+            for (int k = 0; k < 4; k++)
+            {
+                B[j+k][i+4] = A[i][j+k+4];
+            } 
         }
     }
 }
