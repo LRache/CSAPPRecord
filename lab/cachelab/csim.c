@@ -159,6 +159,7 @@ int main(int argc, char **argv)
     init_cache();
 
     simulate_cache();
+    free_cache();
 
     printSummary(hitCount, missCount, evictionCount);
     return 0;
