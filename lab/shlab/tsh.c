@@ -173,6 +173,24 @@ int main(int argc, char **argv)
  */
 void eval(char *cmdline)
 {
+    char *argv[MAXARGS];
+    pid_t pid;
+    sigset_t mask, maskAll, prevMask;
+    sigemptyset(&mask);
+    sigfillset(&maskAll);
+    sigaddset(&mask, SIGCHLD);
+    
+    int bg = parseline(cmdline, argv);
+
+    sigprocmask(SIG_BLOCK, &mask, &prevMask);
+    if ((pid = fork()) == 0) {
+        sigprocmask(SIG_SETMASK, &prevMask, NULL);
+        execve(argv[0], argv, environ);
+    }
+    sigprocmask(SIG_BLOCK, &maskAll, NULL);
+    addjob(jobs, pid, 0, cmdline);
+    sigprocmask(SIG_SETMASK, &prevMask, NULL);
+    
     return;
 }
 
