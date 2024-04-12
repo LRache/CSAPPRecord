@@ -183,6 +183,7 @@ void eval(char *cmdline)
     sigaddset(&mask, SIGCHLD);
     
     int bg = parseline(cmdline, argv);
+    puts(cmdline);
 
     sigprocmask(SIG_BLOCK, &mask, &prevMask);
     if ((pid = fork()) == 0) {
@@ -318,6 +319,7 @@ void sigchld_handler(int sig)
  */
 void sigint_handler(int sig)
 {
+    exit(0);
     return;
 }
 
