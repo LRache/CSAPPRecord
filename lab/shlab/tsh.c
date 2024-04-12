@@ -88,6 +88,8 @@ void app_error(char *msg);
 typedef void handler_t(int);
 handler_t *Signal(int signum, handler_t *handler);
 
+static volatile sig_atomic_t flag;
+
 /*
  * main - The shell's main routine
  */
@@ -188,8 +190,19 @@ void eval(char *cmdline)
         execve(argv[0], argv, environ);
     }
     sigprocmask(SIG_BLOCK, &maskAll, NULL);
-    addjob(jobs, pid, 0, cmdline);
+    if (bg) {
+        addjob(jobs, pid, BG, cmdline);
+    } else {
+        addjob(jobs, pid, FG, cmdline);
+    }
     sigprocmask(SIG_SETMASK, &prevMask, NULL);
+
+    if (!bg) {
+        flag = 0;
+        while (flag) {
+            sigsuspend(&prevMask);
+        }
+    }
     
     return;
 }
