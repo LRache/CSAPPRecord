@@ -176,19 +176,26 @@ int main(int argc, char **argv)
 void eval(char *cmdline)
 {
     char *argv[MAXARGS];
+    int bg = parseline(cmdline, argv);
+    
+    if (builtin_cmd(argv)) {
+        return;
+    }
+
     pid_t pid;
     sigset_t mask, maskAll, prevMask;
     sigemptyset(&mask);
     sigfillset(&maskAll);
     sigaddset(&mask, SIGCHLD);
-    
-    int bg = parseline(cmdline, argv);
-    puts(cmdline);
 
     sigprocmask(SIG_BLOCK, &mask, &prevMask);
     if ((pid = fork()) == 0) {
         sigprocmask(SIG_SETMASK, &prevMask, NULL);
-        execve(argv[0], argv, environ);
+        if (execve(argv[0], argv, environ) == -1) {
+            fflush(stdout);
+            // printf("%s: Command not found.\n", argv[0]);
+        }
+        return;
     }
     sigprocmask(SIG_BLOCK, &maskAll, NULL);
     if (bg) {
@@ -199,10 +206,11 @@ void eval(char *cmdline)
     sigprocmask(SIG_SETMASK, &prevMask, NULL);
 
     if (!bg) {
-        flag = 0;
+        flag = 1;
         while (flag) {
             sigsuspend(&prevMask);
         }
+        fflush(stdout);
     }
     
     return;
@@ -277,6 +285,16 @@ int parseline(const char *cmdline, char **argv)
  */
 int builtin_cmd(char **argv)
 {
+    char *cmd = argv[0];
+    if (strcmp(cmd, "jobs") == 0 || strcmp(cmd, "JOBS") == 0) {
+        listjobs(jobs);
+        return 1;
+    }
+    if (strcmp(cmd, "quit") == 0 || strcmp(cmd, "QUIT") == 0) {
+        exit(0);
+        return 1;
+    }
+
     return 0; /* not a builtin command */
 }
 
@@ -285,6 +303,7 @@ int builtin_cmd(char **argv)
  */
 void do_bgfg(char **argv)
 {
+
     return;
 }
 
@@ -293,6 +312,7 @@ void do_bgfg(char **argv)
  */
 void waitfg(pid_t pid)
 {
+
     return;
 }
 
@@ -309,6 +329,14 @@ void waitfg(pid_t pid)
  */
 void sigchld_handler(int sig)
 {
+    int old_errno = errno;
+    pid_t pid;
+    while (pid = waitpid(-1, NULL, WNOHANG)) {
+        struct job_t *job = getjobpid(jobs, pid);
+        if (job->state == )
+    }
+    
+    errno = old_errno;
     return;
 }
 
