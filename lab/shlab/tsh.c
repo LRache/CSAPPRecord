@@ -189,6 +189,7 @@ void eval(char *cmdline)
     sigprocmask(SIG_BLOCK, &mask, &prevMask);
     if ((pid = fork()) == 0) {
         sigprocmask(SIG_SETMASK, &prevMask, NULL);
+        setpgid(0, 0);
         execve(argv[0], argv, environ);
         printf("%s: Command not found.\n", argv[0]);
         exit(0);
@@ -202,7 +203,7 @@ void eval(char *cmdline)
     sigprocmask(SIG_SETMASK, &prevMask, NULL);
 
     if (!bg) {
-        setpgid(pid, getpid());
+        setpgid(pid, getpid()+1);
         waitfg(pid);
     }
     
@@ -336,9 +337,15 @@ void sigchld_handler(int sig)
     sigprocmask(SIG_BLOCK, &mask, &prevMask);
     int old_errno = errno;
 
+    int status;
     pid_t pid;
-    while ((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
-        deletejob(jobs, pid);
+    while ((pid = waitpid(-1, &status, WNOHANG | WUNTRACED)) > 0) {
+        if (WIFSTOPPED(status)) {
+            struct job_t *job = getjobpid(jobs, pid);
+            job->state = ST;
+        } else {
+            deletejob(jobs, pid);
+        }
     }
     
     errno = old_errno;
@@ -358,7 +365,9 @@ void sigint_handler(int sig)
     sigprocmask(SIG_BLOCK, &mask, &prevMask);
     int old_errno = errno;
 
-    // kill(-getpid(), SIGINT);
+    pid_t pid = fgpid(jobs);
+    if (pid != 0) kill(-pid, SIGINT);
+    printf("INT\n");
 
     errno = old_errno;
     sigprocmask(SIG_BLOCK, &prevMask, NULL);
@@ -372,7 +381,17 @@ void sigint_handler(int sig)
  */
 void sigtstp_handler(int sig)
 {
-    
+    sigset_t mask, prevMask;
+    sigfillset(&mask);
+    sigprocmask(SIG_BLOCK, &mask, &prevMask);
+    int old_errno = errno;
+
+    pid_t pid = fgpid(jobs);
+    if (pid != 0) kill(-pid, SIGTSTP);
+    printf("INT\n");
+
+    errno = old_errno;
+    sigprocmask(SIG_BLOCK, &prevMask, NULL);
     return;
 }
 
