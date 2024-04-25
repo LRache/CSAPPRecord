@@ -44,11 +44,53 @@ team_t team = {
 
 #define SIZE_T_SIZE (ALIGN(sizeof(size_t)))
 
+#define CHUNK_SIZE (1<<12)
+
+#define WORD_SIZE 4
+#define DWORD_SIZE 8
+#define META_SIZE DWORD_SIZE
+
+#define GET_WORD(p) (*(unsigned int*)(p))
+#define GET_HEADER(p) (GET_WORD((char*)(p) - WORD_SIZE))
+#define GET_BLOCK_SIZE(p) (GET_WORD(p) & ~0x7)
+#define GET_BLOCK_ALLOCATED(p) (GET_WORD(p) & 0x1)
+#define GET_FOOTER(p) (GET_WORD((char*)(p) + GET_BLOCK_SIZE(p) - DOUBLE_WORD_SIZE))
+#define NEXT_HEADER(p) (GET_BLOCK_SIZE(GET_HEADER(p))+(p)-WORD_SIZE)
+#define IS_END(p) (GET_WORD(p) == 0)
+
+#define SET_WORD(p, val) (GET_WORD(p)=val)
+
+#define PACK(size, allocated) ((size) | (allocated))
+
+static void *head = NULL;
+
+static void *extend_heap(size_t s) {
+    size_t size = s % 2 ? (s+1) * WORD_SIZE : s * WORD_SIZE;
+    char *p = mem_sbrk(size);
+    if ((long)p == -1) return NULL;
+
+    SET_WORD(p, PACK(size, 0));
+    SET_WORD(p+size-WORD_SIZE, PACK(size, 0));
+    SET_WORD(p+size, 0);
+
+    return p;
+}
+
 /* 
  * mm_init - initialize the malloc package.
  */
 int mm_init(void)
 {
+    void *oldBrk = mem_sbrk(4*WORD_SIZE);
+    if (oldBrk == NULL) return -1;
+    SET_WORD(oldBrk, 0);
+    SET_WORD(oldBrk + WORD_SIZE, PACK(DWORD_SIZE, 1));
+    SET_WORD(oldBrk + WORD_SIZE * 2, PACK(DWORD_SIZE, 1));
+    SET_WORD(oldBrk + WORD_SIZE * 3, 0);
+    if (extend_heap(CHUNK_SIZE / WORD_SIZE) == NULL) {
+        return -1;
+    }
+    head = oldBrk + DWORD_SIZE;
     return 0;
 }
 
@@ -58,13 +100,21 @@ int mm_init(void)
  */
 void *mm_malloc(size_t size)
 {
-    int newsize = ALIGN(size + SIZE_T_SIZE);
-    void *p = mem_sbrk(newsize);
-    if (p == (void *)-1)
-	return NULL;
-    else {
-        *(size_t *)p = size;
-        return (void *)((char *)p + SIZE_T_SIZE);
+    int newsize = ALIGN(size + META_SIZE);
+    void *p = NEXT_HEADER(head);
+    while (!IS_END(p))
+    {
+        if (!GET_BLOCK_ALLOCATED(p) && GET_BLOCK_SIZE(p) <= newsize) {
+            break;
+        }
+        p = NEXT_HEADER(p);
+    }
+    if (IS_END(p)) {
+        return extend_heap(newsize);
+    } else {
+        SET_WORD(p, PACK(newsize, 1));
+        SET_WORD(p+newsize-WORD_SIZE, PACK(newsize, 1));
+        return p+WORD_SIZE;
     }
 }
 
@@ -87,24 +137,10 @@ void *mm_realloc(void *ptr, size_t size)
     newptr = mm_malloc(size);
     if (newptr == NULL)
       return NULL;
-    copySize = *(size_t *)((char *)oldptr - SIZE_T_SIZE);
+    copySize = GET_BLOCK_SIZE(GET_HEADER(oldptr));
     if (size < copySize)
       copySize = size;
     memcpy(newptr, oldptr, copySize);
     mm_free(oldptr);
     return newptr;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
