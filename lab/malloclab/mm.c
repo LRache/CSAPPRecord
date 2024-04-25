@@ -54,14 +54,14 @@ team_t team = {
 #define GET_BLOCK_SIZE(p) (GET_WORD(p) & ~0x7)
 #define GET_BLOCK_ALLOCATED(p) (GET_WORD(p) & 0x1)
 
-#define GET_HEADER(p) (GET_WORD((void*)(p) - WORD_SIZE))
-#define GET_FOOTER(p) (GET_WORD((void*)(p) + GET_BLOCK_SIZE(p) - DWORD_SIZE))
+#define GET_HEADER(p) ((void*)(p) - WORD_SIZE)
+#define GET_FOOTER(p) ((void*)(p) + GET_BLOCK_SIZE(p) - DWORD_SIZE)
 
-#define NEXT_HEADER(h) (GET_BLOCK_SIZE(h)+(h)-WORD_SIZE)
+#define NEXT_HEADER(h) ((h) + GET_BLOCK_SIZE(h))
 #define NEXT_FOOTER(h) (NEXT_HEADER(h) + GET_BLOCK_SIZE(NEXT_HEADER(h)) - WORD_SIZE)
 #define PREV_FOOTER(h) ((void*)h - WORD_SIZE)
 #define PREV_HEADER(h) (PREV_FOOTER(h) - GET_BLOCK_SIZE(PREV_FOOTER(h)) + WORD_SIZE)
-#define IS_END_HEADER(p) (GET_WORD(p) == 0)
+#define IS_END_HEADER(h) (GET_WORD(h) == 0)
 
 #define GET_PREV_ALLOCATED(p) (GET_BLOCK_ALLOCATED((char*)p - WORD_SIZE))
 
@@ -108,13 +108,12 @@ static void *extend_heap(size_t s) {
     size_t size = s % 2 ? (s+1) * WORD_SIZE : s * WORD_SIZE;
     void *oldBrk = mem_sbrk(size);
     if ((long)oldBrk == -1) return NULL;
-    ;
+
     SET_WORD(oldBrk-WORD_SIZE, PACK(size, 0));
-    SET_WORD(oldBrk, PACK(size, 0));
-    SET_WORD(oldBrk+size-WORD_SIZE, PACK(size, 0));
-    SET_WORD(oldBrk)
-    
-    return coalesce(oldBrk);
+    SET_WORD(oldBrk+size-DWORD_SIZE, PACK(size, 0));
+    SET_WORD(oldBrk+size-WORD_SIZE, 0);    
+    // return coalesce(oldBrk);
+    return oldBrk;
 }
 
 /* 
@@ -122,12 +121,14 @@ static void *extend_heap(size_t s) {
  */
 int mm_init(void)
 {
-    void *oldBrk = mem_sbrk(4*WORD_SIZE);
+    void *oldBrk = mem_sbrk(WORD_SIZE * 4);
     if (oldBrk == NULL) return -1;
+    
     SET_WORD(oldBrk, 0);
     SET_WORD(oldBrk + WORD_SIZE, PACK(DWORD_SIZE, 1));
     SET_WORD(oldBrk + WORD_SIZE * 2, PACK(DWORD_SIZE, 1));
     SET_WORD(oldBrk + WORD_SIZE * 3, 0);
+    
     if (extend_heap(CHUNK_SIZE / WORD_SIZE) == NULL) {
         return -1;
     }
