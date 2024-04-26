@@ -142,11 +142,17 @@ int mm_init(void)
  */
 void *mm_malloc(size_t size)
 {
-    int newsize = ALIGN(size + META_SIZE);
+    size_t newsize = ALIGN(size + META_SIZE);
     void *p = NEXT_HEADER(listHead);
     while (!IS_END_HEADER(p))
     {
+        printf("BLOCK:%u\n", GET_WORD(p));
+        printf("BLOCK:%u\n", GET_BLOCK_SIZE(p));
+        printf("SIZE:%u\n", newsize);
+        printf("%d\n", (!GET_BLOCK_ALLOCATED(p)));
+        printf("%d\n", (GET_BLOCK_SIZE(p) <= newsize));
         if (!GET_BLOCK_ALLOCATED(p) && GET_BLOCK_SIZE(p) <= newsize) {
+            printf("FIND\n");
             break;
         }
         p = NEXT_HEADER(p);
