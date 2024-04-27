@@ -41,7 +41,6 @@ team_t team = {
 /* rounds up to the nearest multiple of ALIGNMENT */
 #define ALIGN(size) (((size) + (ALIGNMENT-1)) & ~0x7)
 
-
 #define SIZE_T_SIZE (ALIGN(sizeof(size_t)))
 
 #define CHUNK_SIZE (1<<12)
@@ -115,6 +114,20 @@ static void *extend_heap(size_t s) {
     return coalesce(oldBrk);
 }
 
+static int allocate(void *head, size_t blockSize) {
+    if (GET_BLOCK_ALLOCATED(head)) return -1;
+    size_t emptySize = GET_BLOCK_SIZE(head);
+    if (emptySize < blockSize) return -1;
+    if (emptySize - blockSize <= META_SIZE) return -1;
+    
+    size_t leftSize = emptySize - blockSize;
+    SET_WORD(head, PACK(blockSize, 1));
+    SET_WORD(head+blockSize-WORD_SIZE, PACK(blockSize, 1));
+    SET_WORD(head+blockSize, PACK(leftSize, 0));
+    SET_WORD(head+emptySize-WORD_SIZE, PACK(leftSize, 0));
+    return 0;
+}
+
 /* 
  * mm_init - initialize the malloc package.
  */
@@ -135,6 +148,24 @@ int mm_init(void)
     return 0;
 }
 
+static void *find_fit(size_t size) {
+    void *p = NEXT_HEADER(listHead);
+    size_t minSize = -1;
+    size_t s;
+    void *fit = NULL;
+    while (!IS_END_HEADER(p))
+    {
+        if (!GET_BLOCK_ALLOCATED(p) && (s = GET_BLOCK_SIZE(p)) >= size) {
+            if (s < minSize) {
+                minSize = s;
+                fit = p;
+            }
+        }
+        p = NEXT_HEADER(p);
+    }
+    return fit;
+}
+
 /* 
  * mm_malloc - Allocate a block by incrementing the brk pointer.
  *     Always allocate a block whose size is a multiple of the alignment.
@@ -142,35 +173,25 @@ int mm_init(void)
 void *mm_malloc(size_t size)
 {
     size_t newsize = ALIGN(size + META_SIZE);
-    void *p = NEXT_HEADER(listHead);
-    size_t emptyBlockSize;
-    while (!IS_END_HEADER(p))
-    {
-        if (!GET_BLOCK_ALLOCATED(p) && (emptyBlockSize = GET_BLOCK_SIZE(p)) >= newsize) {
-            break;
-        }
-        p = NEXT_HEADER(p);
-    }
-    if (IS_END_HEADER(p)) {
-        void *oldBrk = extend_heap(CHUNK_SIZE/WORD_SIZE);
-        if (oldBrk != NULL) {
-            SET_WORD(oldBrk - WORD_SIZE, PACK(newsize, 1));
-            SET_WORD(oldBrk + newsize - WORD_SIZE * 2, PACK(newsize, 1));
-            return oldBrk;
+    void *p = find_fit(newsize);
+    if (p == NULL) {
+        size_t extendSize = CHUNK_SIZE * (newsize / CHUNK_SIZE + 1);
+        p = extend_heap(extendSize);
+        if (p != NULL) {
+            allocate(p - WORD_SIZE, newsize);
+            return p;
         } else {
             return NULL;
         }
     } else {
+        size_t emptyBlockSize = GET_BLOCK_SIZE(p);
         if (emptyBlockSize - newsize <= META_SIZE) {
-            SET_WORD(p, PACK(emptyBlockSize, 1));
-            SET_WORD(p+newsize-WORD_SIZE, PACK(emptyBlockSize, 1));
-        } else {
+            newsize = emptyBlockSize;
             SET_WORD(p, PACK(newsize, 1));
             SET_WORD(p+newsize-WORD_SIZE, PACK(newsize, 1));
-            SET_WORD(p+newsize, PACK(emptyBlockSize-newsize, 0));
-            SET_WORD(p+emptyBlockSize-WORD_SIZE, PACK(emptyBlockSize-newsize, 0));
+        } else {
+            allocate(p, newsize);
         }
-        
         return p + WORD_SIZE;
     }
 }
