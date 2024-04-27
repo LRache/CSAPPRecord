@@ -51,11 +51,11 @@ team_t team = {
 #define META_SIZE DWORD_SIZE
 
 #define GET_WORD(p) (*(unsigned int*)(p))
-#define GET_BLOCK_SIZE(p) (GET_WORD(p) & ~0x7)
+#define GET_BLOCK_SIZE(h) (GET_WORD(h) & ~0x7)
 #define GET_BLOCK_ALLOCATED(p) (GET_WORD(p) & 0x1)
 
 #define GET_HEADER(p) ((void*)(p) - WORD_SIZE)
-#define GET_FOOTER(p) ((void*)(p) + GET_BLOCK_SIZE(p) - DWORD_SIZE)
+#define GET_FOOTER(p) ((void*)(p) + GET_BLOCK_SIZE(GET_HEADER(p)) - DWORD_SIZE)
 
 #define NEXT_HEADER(h) ((h) + GET_BLOCK_SIZE(h))
 #define NEXT_FOOTER(h) (NEXT_HEADER(h) + GET_BLOCK_SIZE(NEXT_HEADER(h)) - WORD_SIZE)
@@ -65,7 +65,7 @@ team_t team = {
 
 #define GET_PREV_ALLOCATED(p) (GET_BLOCK_ALLOCATED((char*)p - WORD_SIZE))
 
-#define SET_WORD(p, val) (GET_WORD(p)=val)
+#define SET_WORD(p, val) (GET_WORD(p)=(val))
 
 #define PACK(size, allocated) ((size) | (allocated))
 
@@ -73,21 +73,21 @@ static void *listHead = NULL;
 
 static void *coalesce(void *p) {
     void *header = GET_HEADER(p);
-    int prevAllocated = GET_BLOCK_ALLOCATED(PREV_FOOTER(header));
-    int nextAllocated = (!IS_END_HEADER(NEXT_HEADER(header))) && GET_BLOCK_ALLOCATED(NEXT_HEADER(header));
+    int prevAvailable = !GET_BLOCK_ALLOCATED(PREV_FOOTER(header));
+    int nextAvailable = !IS_END_HEADER(NEXT_HEADER(header)) && !GET_BLOCK_ALLOCATED(NEXT_HEADER(header));
     
     size_t pSize = GET_BLOCK_SIZE(header);
-    if (!prevAllocated && !nextAllocated) {
+    if (!prevAvailable && !nextAvailable) {
         return p;
     }
-    else if (prevAllocated && !nextAllocated) {
+    else if (prevAvailable && !nextAvailable) {
         size_t prevSize = GET_BLOCK_SIZE(PREV_FOOTER(header));
         size_t newSize = prevSize + pSize;
         SET_WORD(PREV_HEADER(header), PACK(newSize, 0));
         SET_WORD(GET_FOOTER(p), PACK(newSize, 0));
         return PREV_HEADER(header) + WORD_SIZE;
     }
-    else if (!prevAllocated && nextAllocated) {
+    else if (!prevAvailable && nextAvailable) {
         size_t nextSize = GET_BLOCK_SIZE(NEXT_HEADER(header));
         size_t newSize = nextSize + pSize;
         SET_WORD(header, PACK(newSize, 0));
@@ -97,7 +97,7 @@ static void *coalesce(void *p) {
     else {
         size_t prevSize = GET_BLOCK_SIZE(PREV_FOOTER(header));
         size_t nextSize = GET_BLOCK_SIZE(NEXT_HEADER(header));
-        size_t newSize = prevSize + pSize + newSize;
+        size_t newSize = prevSize + pSize + nextSize;
         SET_WORD(PREV_FOOTER(header), PACK(newSize, 0));
         SET_WORD(NEXT_FOOTER(header), PACK(newSize, 0));
         return PREV_HEADER(header) + WORD_SIZE;
@@ -112,8 +112,7 @@ static void *extend_heap(size_t s) {
     SET_WORD(oldBrk-WORD_SIZE, PACK(size, 0));
     SET_WORD(oldBrk+size-DWORD_SIZE, PACK(size, 0));
     SET_WORD(oldBrk+size-WORD_SIZE, 0);    
-    // return coalesce(oldBrk);
-    return oldBrk;
+    return coalesce(oldBrk);
 }
 
 /* 
@@ -125,8 +124,8 @@ int mm_init(void)
     if (oldBrk == NULL) return -1;
     
     SET_WORD(oldBrk, 0);
-    SET_WORD(oldBrk + WORD_SIZE, PACK(DWORD_SIZE, 1));
-    SET_WORD(oldBrk + WORD_SIZE * 2, PACK(DWORD_SIZE, 1));
+    SET_WORD(oldBrk + WORD_SIZE, PACK(META_SIZE, 1));
+    SET_WORD(oldBrk + WORD_SIZE * 2, PACK(META_SIZE, 1));
     SET_WORD(oldBrk + WORD_SIZE * 3, 0);
     
     if (extend_heap(CHUNK_SIZE / WORD_SIZE) == NULL) {
@@ -144,32 +143,36 @@ void *mm_malloc(size_t size)
 {
     size_t newsize = ALIGN(size + META_SIZE);
     void *p = NEXT_HEADER(listHead);
+    size_t emptyBlockSize;
     while (!IS_END_HEADER(p))
     {
-        printf("BLOCK:%u\n", GET_WORD(p));
-        printf("BLOCK:%u\n", GET_BLOCK_SIZE(p));
-        printf("SIZE:%u\n", newsize);
-        printf("%d\n", (!GET_BLOCK_ALLOCATED(p)));
-        printf("%d\n", (GET_BLOCK_SIZE(p) <= newsize));
-        if (!GET_BLOCK_ALLOCATED(p) && GET_BLOCK_SIZE(p) <= newsize) {
-            printf("FIND\n");
+        if (!GET_BLOCK_ALLOCATED(p) && (emptyBlockSize = GET_BLOCK_SIZE(p)) >= newsize) {
             break;
         }
         p = NEXT_HEADER(p);
     }
     if (IS_END_HEADER(p)) {
-        void *oldBrk = extend_heap(newsize);
-        if (p != NULL) {
+        void *oldBrk = extend_heap(CHUNK_SIZE/WORD_SIZE);
+        if (oldBrk != NULL) {
             SET_WORD(oldBrk - WORD_SIZE, PACK(newsize, 1));
             SET_WORD(oldBrk + newsize - WORD_SIZE * 2, PACK(newsize, 1));
-            p = oldBrk;
+            return oldBrk;
+        } else {
+            return NULL;
         }
     } else {
-        SET_WORD(p, PACK(newsize, 1));
-        SET_WORD(p+newsize-WORD_SIZE, PACK(newsize, 1));
-        p = p + WORD_SIZE;
+        if (emptyBlockSize - newsize <= META_SIZE) {
+            SET_WORD(p, PACK(emptyBlockSize, 1));
+            SET_WORD(p+newsize-WORD_SIZE, PACK(emptyBlockSize, 1));
+        } else {
+            SET_WORD(p, PACK(newsize, 1));
+            SET_WORD(p+newsize-WORD_SIZE, PACK(newsize, 1));
+            SET_WORD(p+newsize, PACK(emptyBlockSize-newsize, 0));
+            SET_WORD(p+emptyBlockSize-WORD_SIZE, PACK(emptyBlockSize-newsize, 0));
+        }
+        
+        return p + WORD_SIZE;
     }
-    return p;
 }
 
 /*
@@ -180,6 +183,8 @@ void mm_free(void *ptr)
     if (ptr == NULL) return;
     void *header = GET_HEADER(ptr);
     SET_WORD(header, PACK(GET_BLOCK_SIZE(header), 0));
+    SET_WORD(GET_FOOTER(ptr), PACK(GET_BLOCK_SIZE(header), 0));
+    coalesce(ptr);
 }
 
 /*
