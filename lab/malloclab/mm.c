@@ -69,6 +69,7 @@ team_t team = {
 #define PACK(size, allocated) ((size) | (allocated))
 
 static void *listHead = NULL;
+static void *lastPtr = NULL;
 
 static void *coalesce(void *p) {
     void *header = GET_HEADER(p);
@@ -179,6 +180,8 @@ void *mm_malloc(size_t size)
         p = extend_heap(extendSize);
         if (p != NULL) {
             allocate(p - WORD_SIZE, newsize);
+            assert(p == lastPtr);
+            lastPtr = p;
             return p;
         } else {
             return NULL;
@@ -192,6 +195,8 @@ void *mm_malloc(size_t size)
         } else {
             allocate(p, newsize);
         }
+        assert(p+WORD_SIZE == lastPtr);
+        lastPtr = p + WORD_SIZE;
         return p + WORD_SIZE;
     }
 }
