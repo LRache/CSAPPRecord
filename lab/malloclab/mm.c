@@ -54,7 +54,8 @@ team_t team = {
 #define GET_BLOCK_ALLOCATED(p) (GET_WORD(p) & 0x1)
 
 #define GET_HEADER(p) ((void*)(p) - WORD_SIZE)
-#define GET_FOOTER(p) ((void*)(p) + GET_BLOCK_SIZE(GET_HEADER(p)) - DWORD_SIZE)
+#define GET_FOOTER_H(h) ((void*)(h) + GET_BLOCK_SIZE(h) - WORD_SIZE)
+#define GET_FOOTER(p) (GET_FOOTER_H(GET_HEADER(p)))
 
 #define NEXT_HEADER(h) ((h) + GET_BLOCK_SIZE(h))
 #define NEXT_FOOTER(h) (NEXT_HEADER(h) + GET_BLOCK_SIZE(NEXT_HEADER(h)) - WORD_SIZE)
@@ -74,6 +75,7 @@ static void *lastPtr = NULL;
 static void *coalesce(void *p) {
     void *header = GET_HEADER(p);
     if (GET_BLOCK_ALLOCATED(header)) return NULL;
+    
     int prevAvailable = !GET_BLOCK_ALLOCATED(PREV_FOOTER(header));
     int nextAvailable = !IS_END_HEADER(NEXT_HEADER(header)) && !GET_BLOCK_ALLOCATED(NEXT_HEADER(header));
     
@@ -81,21 +83,21 @@ static void *coalesce(void *p) {
     if (!prevAvailable && !nextAvailable) {
         return p;
     }
-    else if (prevAvailable && !nextAvailable) {
+    if (prevAvailable && !nextAvailable) {
         size_t prevSize = GET_BLOCK_SIZE(PREV_FOOTER(header));
         size_t newSize = prevSize + pSize;
         SET_WORD(PREV_HEADER(header), PACK(newSize, 0));
         SET_WORD(GET_FOOTER(p), PACK(newSize, 0));
         return PREV_HEADER(header) + WORD_SIZE;
     }
-    else if (!prevAvailable && nextAvailable) {
-        size_t nextSize = GET_BLOCK_SIZE(NEXT_HEADER(header));
-        size_t newSize = nextSize + pSize;
-        SET_WORD(header, PACK(newSize, 0));
-        SET_WORD(NEXT_FOOTER(header), PACK(newSize, 0));
-        return p;
-    }
-    else {
+    // if (!prevAvailable && nextAvailable) {
+    //     size_t nextSize = GET_BLOCK_SIZE(NEXT_HEADER(header));
+    //     size_t newSize = nextSize + pSize;
+    //     SET_WORD(header, PACK(newSize, 0));
+    //     SET_WORD(NEXT_FOOTER(header), PACK(newSize, 0));
+    //     return p;
+    // }
+    if (prevAvailable && nextAvailable) {
         size_t prevSize = GET_BLOCK_SIZE(PREV_FOOTER(header));
         size_t nextSize = GET_BLOCK_SIZE(NEXT_HEADER(header));
         size_t newSize = prevSize + pSize + nextSize;
@@ -103,6 +105,7 @@ static void *coalesce(void *p) {
         SET_WORD(NEXT_FOOTER(header), PACK(newSize, 0));
         return PREV_HEADER(header) + WORD_SIZE;
     }
+    return p;
 }
 
 static void *extend_heap(size_t s) {
@@ -210,7 +213,7 @@ void mm_free(void *ptr)
     if (ptr == NULL) return;
     void *header = GET_HEADER(ptr);
     SET_WORD(header, PACK(GET_BLOCK_SIZE(header), 0));
-    SET_WORD(GET_FOOTER(ptr), PACK(GET_BLOCK_SIZE(header), 0));
+    SET_WORD(GET_FOOTER_H(header), PACK(GET_BLOCK_SIZE(header), 0));
     coalesce(ptr);
 }
 
