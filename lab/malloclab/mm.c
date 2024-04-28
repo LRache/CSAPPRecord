@@ -73,6 +73,7 @@ static void *lastPtr = NULL;
 
 static void *coalesce(void *p) {
     void *header = GET_HEADER(p);
+    if (GET_BLOCK_ALLOCATED(header)) return NULL;
     int prevAvailable = !GET_BLOCK_ALLOCATED(PREV_FOOTER(header));
     int nextAvailable = !IS_END_HEADER(NEXT_HEADER(header)) && !GET_BLOCK_ALLOCATED(NEXT_HEADER(header));
     
