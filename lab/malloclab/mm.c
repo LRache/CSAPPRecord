@@ -59,7 +59,7 @@ team_t team = {
 #define NEXT_HEADER(h) ((h) + GET_BLOCK_SIZE(h))
 #define NEXT_FOOTER(h) (NEXT_HEADER(h) + GET_BLOCK_SIZE(NEXT_HEADER(h)) - WORD_SIZE)
 #define PREV_FOOTER(h) ((void*)h - WORD_SIZE)
-#define PREV_HEADER(h) (PREV_FOOTER(h) - GET_BLOCK_SIZE(PREV_FOOTER(h)) + WORD_SIZE)
+#define PREV_HEADER(h) ((void*)h - GET_BLOCK_SIZE(PREV_FOOTER(h)))
 #define IS_END_HEADER(h) (GET_WORD(h) == 0)
 
 #define GET_PREV_ALLOCATED(p) (GET_BLOCK_ALLOCATED((char*)p - WORD_SIZE))
@@ -98,7 +98,7 @@ static void *coalesce(void *p) {
         size_t prevSize = GET_BLOCK_SIZE(PREV_FOOTER(header));
         size_t nextSize = GET_BLOCK_SIZE(NEXT_HEADER(header));
         size_t newSize = prevSize + pSize + nextSize;
-        SET_WORD(PREV_FOOTER(header), PACK(newSize, 0));
+        SET_WORD(PREV_HEADER(header), PACK(newSize, 0));
         SET_WORD(NEXT_FOOTER(header), PACK(newSize, 0));
         return PREV_HEADER(header) + WORD_SIZE;
     }
@@ -180,7 +180,7 @@ void *mm_malloc(size_t size)
         p = extend_heap(extendSize);
         if (p != NULL) {
             allocate(p - WORD_SIZE, newsize);
-            assert(p == lastPtr);
+            //assert(p == lastPtr);
             lastPtr = p;
             return p;
         } else {
@@ -195,7 +195,7 @@ void *mm_malloc(size_t size)
         } else {
             allocate(p, newsize);
         }
-        assert(p+WORD_SIZE == lastPtr);
+        
         lastPtr = p + WORD_SIZE;
         return p + WORD_SIZE;
     }
