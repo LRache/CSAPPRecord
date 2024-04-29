@@ -90,13 +90,13 @@ static void *coalesce(void *p) {
         SET_WORD(GET_FOOTER(p), PACK(newSize, 0));
         return PREV_HEADER(header) + WORD_SIZE;
     }
-    // if (!prevAvailable && nextAvailable) {
-    //     size_t nextSize = GET_BLOCK_SIZE(NEXT_HEADER(header));
-    //     size_t newSize = nextSize + pSize;
-    //     SET_WORD(header, PACK(newSize, 0));
-    //     SET_WORD(NEXT_FOOTER(header), PACK(newSize, 0));
-    //     return p;
-    // }
+    if (!prevAvailable && nextAvailable) {
+        size_t nextSize = GET_BLOCK_SIZE(NEXT_HEADER(header));
+        size_t newSize = nextSize + pSize;
+        SET_WORD(header, PACK(newSize, 0));
+        SET_WORD(header + newSize - WORD_SIZE, PACK(newSize, 0));
+        return p;
+    }
     if (prevAvailable && nextAvailable) {
         size_t prevSize = GET_BLOCK_SIZE(PREV_FOOTER(header));
         size_t nextSize = GET_BLOCK_SIZE(NEXT_HEADER(header));
