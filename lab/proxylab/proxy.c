@@ -47,7 +47,7 @@ void do_proxy(int fd) {
         sscanf(url, "%49[^/]/%99s", host, path);
     }
     
-    printf("host: %s\npath: %s", host, path);
+    printf("host: %s\npath: %s\n", host, path);
     int n = sscanf(host, "%49[^:]:%5s", hostname, port);
     
     int client_fd; 
@@ -58,16 +58,24 @@ void do_proxy(int fd) {
         client_fd = Open_clientfd(hostname, port);
     }
 
-    char request[MAXBUF];
-    sprintf(request, "%s %s HTTP/1.0\r\n", method, path);
-    sprintf(request, "%s\r\n", request);
+    char request[BUFSIZ];
+    sprintf(request, "%s /%s HTTP/1.0\r\n\r\n", method, path);
     sprintf(request, "%shost: %s\r\n", request, hostname);
-    sprintf(request, "%sUser-Agent: %s\r\n", request, user_agent_hdr);
+    sprintf(request, "%sUser-Agent: %s", request, user_agent_hdr);
     sprintf(request, "%sConnection: close\r\nProxy-Connection: close\r\n\r\n", request);
     Rio_writen(client_fd, request, strlen(request));
-    while ((n = Rio_readlineb(connectRp, buffer, MAXBUF)) != -1)
-    {
-        Rio_writen(client_fd, buffer, n);
+    // while ((n = Rio_readlineb(connectRp, buffer, BUFSIZ)) != -1)
+    // {
+    //     Rio_writen(client_fd, buffer, n);
+    // }
+    printf("%s", request);
+
+    rio_t clientRio;
+    rio_t *clientRp = &clientRio;
+    Rio_readinitb(clientRp, client_fd);
+    while ((n = Rio_readnb(clientRp, buffer, BUFSIZ)) != 0)
+    { 
+        Rio_writen(fd, buffer, n);
     }
-    close(client_fd);
+    Close(client_fd);
 }
